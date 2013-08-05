@@ -1,5 +1,8 @@
 # encoding: utf-8
-require File.expand_path("../lib/guard/concat", __FILE__)
+begin
+  require File.expand_path("../lib/guard/concat", __FILE__)
+rescue LoadError
+end
 
 Gem::Specification.new do |s|
   s.name         = "guard-concat"
@@ -7,7 +10,7 @@ Gem::Specification.new do |s|
   s.email        = "makevoid@gmail.com"
   s.summary      = "Guard gem for concatenating (js/css) files"
   s.homepage     = "http://github.com/makevoid/guard-concat"
-  s.version      = Guard::Concat::VERSION
+  s.version      = Guard::Concat::VERSION rescue '0.0'
 
   s.description  = <<-DESC
     Guard::Concat automatically concatenates files in one when watched files are modified.
