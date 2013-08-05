@@ -4,22 +4,17 @@ require 'guard/watcher'
 
 module Guard
   class Concat < Guard
-
     VERSION = '0.0.4'
 
     def initialize(watchers=[], opts={})
-      @output = "#{opts[:output]}.#{opts[:type]}"
-      files = opts[:files].join("|")
-      regex = %r{^#{opts[:input_dir]}/(#{files})\.#{opts[:type]}$}
-      watcher = ::Guard::Watcher.new regex
-      watchers << watcher
-      @watchers, @opts = watchers, opts
-      super watchers, opts
+      @opts = opts
+      concat if all_on_start?
+      watchers << ::Guard::Watcher.new(matcher_regex)
+      super(watchers, opts)
     end
 
     def run_on_changes(paths)
       concat
-      UI.info "Concatenated #{@output}"
     end
 
     # The actual concat method
@@ -28,30 +23,50 @@ module Guard
     # supports * and expands them requiring all files in that path/folder
 
     def concat
-      content = ""
-      files = []
-      @opts[:files].each do |file|
-        files += if single? file
-          ["#{@opts[:input_dir]}/#{file}.#{@opts[:type]}"]
-        else
-          expand file
-        end
+      file_names = files.map do |file|
+        single?(file) ? full_path(file) : expand(file)
       end
-      files.each do |file|
+
+      content = file_names.flatten.reduce("") do |content, file|
         content << File.read(file)
         content << "\n"
       end
-      File.open(@output, "w"){ |f| f.write content.strip }
+
+      File.open(output_file, "w"){ |f| f.write content.strip }
+
+      UI.info "Concatenated #{file_names.join(', ')} to #{output_file}"
+    end
+
+    def full_path(file)
+      path = "#{input_dir}/#{file}"
+      path << ".#{type}" unless path =~ /\.#{type}$/
+      path
+    end
+
+    def matcher_regex
+      all_files = files.map{|f| f.sub(/\*$/, '.+') }.join("|")
+      %r|^#{input_dir}/(#{all_files})\.#{type}$|
+    end
+
+    def files
+      @opts.fetch(:files)
     end
 
     def input_dir
-      @opts[:input_dir]
+      @opts.fetch(:input_dir)
     end
 
     def type
-      @opts[:type]
+      @opts.fetch(:type)
     end
 
+    def output_file
+      @output_file ||= "#{@opts.fetch(:output)}.#{type}"
+    end
+
+    def all_on_start?
+      !!@opts[:all_on_start]
+    end
 
     private
 
@@ -62,8 +77,7 @@ module Guard
     end
 
     def expand(file)
-      path = "#{input_dir}/#{file}.#{type}"
-      Dir.glob path
+      Dir.glob full_path(file)
     end
 
   end
