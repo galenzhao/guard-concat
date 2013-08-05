@@ -1,1 +1,4 @@
-*.gem
+/*.gem
+/.ruby-version
+/.idea/
+/pkg/
