@@ -8,11 +8,18 @@ module Guard
 
     def initialize(watchers=[], opts={})
       @opts = opts
-      concat if all_on_start?
       watchers << ::Guard::Watcher.new(matcher_regex)
       super(watchers, opts)
     end
 
+    def start
+      run_all if all_on_start?
+    end
+    
+    def run_all
+      concat
+    end
+    
     def run_on_changes(paths)
       concat
     end
