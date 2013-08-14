@@ -4,8 +4,6 @@ require 'guard/watcher'
 
 module Guard
   class Concat < Guard
-    VERSION = '0.0.4'
-
     def initialize(watchers=[], opts={})
       @opts = opts
       watchers << ::Guard::Watcher.new(matcher_regex)
@@ -15,11 +13,11 @@ module Guard
     def start
       run_all if all_on_start?
     end
-    
+
     def run_all
       concat
     end
-    
+
     def run_on_changes(paths)
       concat
     end
